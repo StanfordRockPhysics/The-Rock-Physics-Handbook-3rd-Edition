@@ -1,0 +1,59 @@
+function [Vp0,Vs0,e,g,d,Ctih]=hudson1(ec,ar,Kfl,K,G,den)
+%function [Vp0,Vs0,e,g,d,Ctih]=hudson1(ec,ar,Kfl,K,G,den)
+% hudson1 - calculate the anisotropic elastic parameters for cracked rock 
+%           using Hudson's first order weak inclusion theory valid for small
+%           crack density and aspect ratios. Assumes a 
+%           single crack set with all normals aligned along 1-axis.
+%           For dry cracks use fluid bulk modulus 0
+%
+% input and output parameters:
+% Vp0, Vs0 - P and S velocities of the cracked rock along the 1-axis
+% e, g, d - epsilon,  gamma, delta, Thomsen's weakly anisotropic parameter
+% Ctih - C6x6 matrix with symmetry axis along 1-axis 
+%       tih stands for transversely isotropic with a horizontal symmetry axis
+% ec - crack density
+% ar - aspect ratio of cracks
+% Kfl, K: bulk modulus of fluid in cracks, and bulk modulus of isotropic matrix
+% G: shear modulus of isotropic matrix
+% den: density of cracked rock
+%
+% See also ECHENG
+
+% References:
+% Hudson (1980, 1981, 1990)
+% L. Thomsen, 1986, Weak elastic anisotropy, Geophysics Vol51 Oct 1986
+%
+% Author:	Li Teng
+% Date:		7/20/98
+
+lam=K-2/3.*G;
+mu=G;
+kapa=Kfl.*(lam+2.*mu)./(pi.*ar.*mu.*(lam+mu));
+u3=4/3.*(lam+2.*mu)./((lam+mu).*(1+kapa));
+u1=16/3.*(lam+2.*mu)./(3.*lam+4.*mu);
+c11=lam+2.*mu-lam.^2.*ec.*u3./mu;
+c13=lam-lam.*(lam+2.*mu).*ec.*u3./mu;
+c33=lam+2.*mu-(lam+2.*mu).^2.*ec.*u3./mu;
+c44=mu-mu.*ec.*u1;
+c66=mu;
+
+Ctih=zeros(6,6);
+Ctih(1,1)=c33;
+Ctih(2,2)=c11;
+Ctih(3,3)=c11;
+Ctih(1,3)=c13;
+Ctih(3,1)=c13;
+Ctih(1,2)=c13;
+Ctih(2,1)=c13;
+Ctih(2,3)=c11-2.*c66;
+Ctih(3,2)=Ctih(2,3);
+Ctih(4,4)=c66;
+Ctih(5,5)=c44;
+Ctih(6,6)=c44;
+
+Vp0=sqrt(c33./den);
+Vs0=sqrt(c44./den);
+e=(c11-c33)./(2.*c33);
+g=(c66-c44)./(2.*c44);
+d=((c13+c44).^2-(c33-c44).^2)./(2.*c33.*(c33-c44));
+
